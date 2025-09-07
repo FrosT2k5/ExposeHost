@@ -1,5 +1,8 @@
 import asyncio
+import binascii
+import json
 import logging
+import os
 import socket
 import ssl
 import sys
@@ -30,14 +33,32 @@ class Client:
         logger.info("Connecting to server %s:%s", self.serverHost, self.serverPort)
         reader, writer = await asyncio.open_connection(self.serverHost, self.serverPort, ssl=ssl_ctx)
         
+        # Sample JSON to send
+        packet_data = {
+            "jwt_token": binascii.hexlify(os.urandom(32)).decode(),
+            "subdomain": "example",
+            "protocol": self.protocol,
+            "c_session_key": binascii.hexlify(os.urandom(32)).decode(),
+            "port": self.port
+        }
+
+        data_bytes = json.dumps(packet_data)
+        data_bytes = data_bytes.encode()
+
         packetID = 1
-        packet_length = 222
+        packet_length = len(data_bytes)
+
         # Send 1 for connection
         writer.write(packetID.to_bytes(1, byteorder="big"))
         writer.write(packet_length.to_bytes(4, byteorder="big"))
 
         logger.debug("Packet info sent")
         await writer.drain()
+
+        # Send the json
+        writer.write(data_bytes)
+        await writer.drain()
+
         writer.close()
         await writer.wait_closed()
 

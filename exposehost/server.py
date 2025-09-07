@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import socket
 import ssl
@@ -26,6 +27,12 @@ class Server:
         connection_type = int.from_bytes(header[0:1], byteorder='big')
         json_length = int.from_bytes(header[1:5], byteorder='big')
         logging.debug("Id: %s, json len: %s", connection_type, json_length)
+
+        packet_bytes = await reader.read(json_length)
+        packet_bytes = packet_bytes.decode()
+        
+        packet = json.loads(packet_bytes)
+        logger.debug("Received Packet: %s", packet)
 
     async def startAsync(self):
         # Create SSL Context
