@@ -4,6 +4,7 @@ import logging
 import socket
 import ssl
 import sys
+from exposehost.impl import packets
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -24,15 +25,18 @@ class Server:
     async def handleAsyncConnection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         logging.debug("Received new connection.")
         header = await reader.read(5)
-        connection_type = int.from_bytes(header[0:1], byteorder='big')
+        packet_id = int.from_bytes(header[0:1], byteorder='big')
         json_length = int.from_bytes(header[1:5], byteorder='big')
-        logging.debug("Id: %s, json len: %s", connection_type, json_length)
+        logging.debug("Id: %s, json len: %s", packet_id, json_length)
 
         packet_bytes = await reader.read(json_length)
-        packet_bytes = packet_bytes.decode()
-        
-        packet = json.loads(packet_bytes)
-        logger.debug("Received Packet: %s", packet)
+
+        packetClass = packets.packetList[packet_id]
+        packet = packetClass()
+        packet.unpack_data(packet_bytes)
+
+        logger.debug("Received Packet: %s", packet.packet_json)
+
 
     async def startAsync(self):
         # Create SSL Context

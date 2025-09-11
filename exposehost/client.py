@@ -6,6 +6,8 @@ import os
 import socket
 import ssl
 import sys
+from exposehost.impl import packets
+from exposehost import helpers
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -33,30 +35,26 @@ class Client:
         logger.info("Connecting to server %s:%s", self.serverHost, self.serverPort)
         reader, writer = await asyncio.open_connection(self.serverHost, self.serverPort, ssl=ssl_ctx)
         
-        # Sample JSON to send
-        packet_data = {
-            "jwt_token": binascii.hexlify(os.urandom(32)).decode(),
-            "subdomain": "example",
-            "protocol": self.protocol,
-            "c_session_key": binascii.hexlify(os.urandom(32)).decode(),
-            "port": self.port
-        }
+        # Send Connection Request Packet
+        req_packet = packets.TunnelRequestPacket()
+        
+        req_packet.jwt_token = helpers.random_string(32)
+        req_packet.c_session_key = helpers.random_string(32)
+        req_packet.port = self.serverPort
+        req_packet.subdomain = 'test_hardcoded_val'
+        req_packet.protocol = self.protocol
 
-        data_bytes = json.dumps(packet_data)
-        data_bytes = data_bytes.encode()
+        packet_header = req_packet.pack_data()
 
-        packetID = 1
-        packet_length = len(data_bytes)
-
-        # Send 1 for connection
-        writer.write(packetID.to_bytes(1, byteorder="big"))
-        writer.write(packet_length.to_bytes(4, byteorder="big"))
+        # Send tunnel request packet
+        writer.write(packet_header)
+        # writer.write()
 
         logger.debug("Packet info sent")
         await writer.drain()
 
         # Send the json
-        writer.write(data_bytes)
+        writer.write(req_packet.packet_bytes)
         await writer.drain()
 
         writer.close()
