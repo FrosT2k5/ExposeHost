@@ -10,7 +10,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.info("Starting")
 
-class Server:
+class Server(packets.ProtocolHandler):
     sock4: socket.socket = None
     ssock4: socket.socket = None
     host: str = None
@@ -23,17 +23,12 @@ class Server:
         logger.info("Starting listener on %s:%s", host, port)
     
     async def handleAsyncConnection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+        super().__init__(reader, writer)
+
         logging.debug("Received new connection.")
-        header = await reader.read(5)
-        packet_id = int.from_bytes(header[0:1], byteorder='big')
-        json_length = int.from_bytes(header[1:5], byteorder='big')
-        logging.debug("Id: %s, json len: %s", packet_id, json_length)
+        packet_id, length = await self.recv_header()
 
-        packet_bytes = await reader.read(json_length)
-
-        packetClass = packets.packetList[packet_id]
-        packet = packetClass()
-        packet.unpack_data(packet_bytes)
+        packet = await self.recv_packet([packet_id, length])
 
         logger.debug("Received Packet: %s", packet.packet_json)
 

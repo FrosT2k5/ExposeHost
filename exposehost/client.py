@@ -12,7 +12,7 @@ from exposehost import helpers
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-class Client:
+class Client(packets.ProtocolHandler):
     host = None
     port = None
     serverHost = None
@@ -34,7 +34,8 @@ class Client:
 
         logger.info("Connecting to server %s:%s", self.serverHost, self.serverPort)
         reader, writer = await asyncio.open_connection(self.serverHost, self.serverPort, ssl=ssl_ctx)
-        
+        super().__init__(reader, writer)
+
         # Send Connection Request Packet
         req_packet = packets.TunnelRequestPacket()
         
@@ -44,21 +45,11 @@ class Client:
         req_packet.subdomain = 'test_hardcoded_val'
         req_packet.protocol = self.protocol
 
-        packet_header = req_packet.pack_data()
-
-        # Send tunnel request packet
-        writer.write(packet_header)
-        # writer.write()
-
+        await self.send_header(req_packet)
+        await self.send_packet(req_packet, send_header=False)
         logger.debug("Packet info sent")
-        await writer.drain()
 
-        # Send the json
-        writer.write(req_packet.packet_bytes)
-        await writer.drain()
-
-        writer.close()
-        await writer.wait_closed()
+        await self.close()
 
     def start(self):
         loop = asyncio.new_event_loop()
