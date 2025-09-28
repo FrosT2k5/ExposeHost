@@ -159,7 +159,7 @@ class ServerConnection(packets.ProtocolHandler):
 
 
     async def new_tunnel_connection(self, connection_id):
-        connection_packet = packets.NewClientConnectionPacket
+        connection_packet = packets.NewClientConnectionPacket()
         connection_packet.connection_id = connection_id
         connection_packet.c_session_key = self.c_session_key
 
@@ -188,7 +188,7 @@ class ServerConnection(packets.ProtocolHandler):
         # Do checks and validation of received info
 
         forwarder_instance = ExposeHostForwarder(self, self.protocol, 0) 
-        tunnel_response_packet = packets.TunnelResponsePacket
+        tunnel_response_packet = packets.TunnelResponsePacket()
         
         # Start the forwarder server
         exposed_server = await forwarder_instance.startExposedServer()
