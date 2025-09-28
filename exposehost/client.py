@@ -1,9 +1,5 @@
 import asyncio
-import binascii
-import json
 import logging
-import os
-import socket
 import ssl
 import sys
 from exposehost.impl import packets

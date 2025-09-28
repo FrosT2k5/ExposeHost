@@ -61,6 +61,101 @@ class TunnelRequestPacket(Packet):
         self.port = packet_json['port']
 
 
+class NewConnectionHostResponsePacket(Packet):
+    packet_id = 1
+    connection_id: str = None
+
+    def pack_data(self) -> int:
+        # Pack the packet and return the packet length
+        self.packet_json = {
+            "connection_id": self.connection_id,
+        }
+
+        self.serialize_json_bytes()
+        return self.packet_length
+    
+    def unpack_data(self, buffer: bytes):
+        self.packet_bytes = buffer
+        packet_json = self.deserialize_json_bytes()
+
+        self.connection_id = packet_json['connection_id']
+
+
+class TunnelResponsePacket(Packet):
+    packet_id = 100
+    port: int = None
+    status: str = None
+    error: str = None
+
+    def pack_data(self) -> int:
+        # Pack the packet and return the packet length
+        if self.status == "success":
+            self.packet_json = {
+                "status": "success",
+                "port": self.port
+            }
+        else:
+            self.packet_json = {
+                "status": "error",
+                "error": self.error
+            }
+        self.serialize_json_bytes()
+        return self.packet_length
+    
+    def unpack_data(self, buffer: bytes):
+        self.packet_bytes = buffer
+        packet_json = self.deserialize_json_bytes()
+
+        self.status = packet_json['status']
+        if self.status == "success":
+            self.port = packet_json["port"]
+        else:
+            self.error = packet_json["error"]
+
+
+class NewClientConnectionPacket(Packet):
+    packet_id = 101
+    connection_id: str = None
+    c_session_key: str = None
+
+    def pack_data(self) -> int:
+        # Pack the packet and return the packet length
+        self.packet_json = {
+            "connection_id": self.connection_id,
+            "c_session_key": self.c_session_key
+        }
+
+        self.serialize_json_bytes()
+        return self.packet_length
+    
+    def unpack_data(self, buffer: bytes):
+        self.packet_bytes = buffer
+        packet_json = self.deserialize_json_bytes()
+
+        self.connection_id = packet_json['connection_id']
+        self.c_session_key = packet_json['c_session_key']
+
+
+class KillServerConnectionPacket(Packet):
+    packet_id = 255
+    reason: str = ""
+
+    def pack_data(self) -> int:
+        # Pack the packet and return the packet length
+        self.packet_json = {
+            "reason": self.reason,
+        }
+
+        self.serialize_json_bytes()
+        return self.packet_length
+    
+    def unpack_data(self, buffer: bytes):
+        self.packet_bytes = buffer
+        packet_json = self.deserialize_json_bytes()
+
+        self.reason = packet_json['reason']
+
+
 class ProtocolHandler:
     reader: asyncio.StreamReader = None
     writer: asyncio.StreamWriter = None
@@ -129,9 +224,12 @@ class ProtocolHandler:
         recv_packet.unpack_data(packet_bytes)
         
         return recv_packet
-        
-            
+
 
 packetList = {
     1: TunnelRequestPacket,
+    2: NewConnectionHostResponsePacket,
+    100: TunnelResponsePacket,
+    101: NewClientConnectionPacket,
+    255: KillServerConnectionPacket
 }
