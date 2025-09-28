@@ -78,11 +78,11 @@ class ExposeHostForwarder(packets.ProtocolHandler):
                 self.is_forwarding = True
                 await asyncio.gather(
                     self.forward(self.client_reader, self.server_host_writer),
-                    self.forward(self.client_writer, self.server_host_reader)
+                    self.forward(self.server_host_reader, self.client_writer)
                     )
                 
             except Exception as e:
-                logger.error("Error at TCP Procotol handler: %s")
+                logger.error("Error at TCP Procotol handler: %s", e)
             finally:
                 if self.is_host_connected:
                     self.server_host_writer.close()
@@ -107,7 +107,7 @@ class ExposeHostForwarder(packets.ProtocolHandler):
 
 
     async def handleTCPClientConnection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
-        client_handler = self.TCPProtocolHandler()
+        client_handler = self.TCPProtocolHandler(self)
         self.tcp_servers.append(client_handler)
         await client_handler.handle_client(reader, writer)
 
@@ -115,7 +115,7 @@ class ExposeHostForwarder(packets.ProtocolHandler):
     async def startExposedServer(self):
         self.sock4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock4.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock4.bind(("::", self.exposed_port))
+        self.sock4.bind(("0.0.0.0", self.exposed_port))
         self.sock4.listen(5)
         self.sock4.setblocking(False)
 
@@ -138,7 +138,7 @@ class ExposeHostForwarder(packets.ProtocolHandler):
         self.serverConnectionClassInstance.forwarders.remove(self)
 
         # Close the control server        
-        self.serverConnectionClassInstance.kill_server("Host Did Not Respond within Timeout.")
+        await self.serverConnectionClassInstance.kill_server("Host Did Not Respond within Timeout.")
 
         
 class ServerConnection(packets.ProtocolHandler):
@@ -198,7 +198,7 @@ class ServerConnection(packets.ProtocolHandler):
         tunnel_response_packet.port = exposed_server[1] 
 
         # Send successful tunnel resp
-        self.send_packet(tunnel_response_packet)
+        await self.send_packet(tunnel_response_packet)
 
 
 class Server(packets.ProtocolHandler):
@@ -229,7 +229,7 @@ class Server(packets.ProtocolHandler):
                 packet.subdomain,
                 packet.c_session_key,
                 packet.protocol,
-                packet.exposed_port,
+                packet.port,
                 reader,
                 writer,
                 self
@@ -249,7 +249,7 @@ class Server(packets.ProtocolHandler):
                            # indicate server has been set
                            # after that, all the data from the clients will
                            # be forwarded
-                           client.set_host_connection(reader, writer)
+                           await client.set_host_connection(reader, writer)
                            return
 
         # If the packet received is invalid

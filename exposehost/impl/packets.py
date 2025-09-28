@@ -62,7 +62,7 @@ class TunnelRequestPacket(Packet):
 
 
 class NewConnectionHostResponsePacket(Packet):
-    packet_id = 1
+    packet_id = 2
     connection_id: str = None
 
     def pack_data(self) -> int:
