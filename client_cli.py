@@ -1,4 +1,6 @@
 from exposehost.client import Client
 
-client = Client('127.0.0.1', 5000, '127.0.0.1', 1435, 'tcp')
+port = input("Port to forward: ")
+subdomain = input("Subdomain: ")
+client = Client('127.0.0.1', port, '127.0.0.1', 1435, 'http', subdomain)
 client.start()

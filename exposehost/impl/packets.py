@@ -1,6 +1,6 @@
 import asyncio
 import json
-        
+import logging     
 
 class Packet:
     packet_id: int = None
@@ -86,13 +86,15 @@ class TunnelResponsePacket(Packet):
     port: int = None
     status: str = None
     error: str = None
+    url: str = ""
 
     def pack_data(self) -> int:
         # Pack the packet and return the packet length
         if self.status == "success":
             self.packet_json = {
                 "status": "success",
-                "port": self.port
+                "port": self.port,
+                "url": self.url
             }
         else:
             self.packet_json = {
@@ -109,6 +111,7 @@ class TunnelResponsePacket(Packet):
         self.status = packet_json['status']
         if self.status == "success":
             self.port = packet_json["port"]
+            self.url = packet_json["url"]
         else:
             self.error = packet_json["error"]
 
@@ -168,10 +171,15 @@ class ProtocolHandler:
         data = await self.reader.read(size)
         return data
 
+        
     async def send(self, bytes: bytes):
-        self.writer.write(bytes)
-        await self.writer.drain()
-        return True
+        try:
+            self.writer.write(bytes)
+            await self.writer.drain()
+            return True
+        except Exception as e:
+            logging.debug("Exception raised while sending bytes: %s", e)
+            return False
     
     async def close(self):
         self.writer.close()
@@ -188,16 +196,29 @@ class ProtocolHandler:
         pack_len_b = packet_len.to_bytes(4, byteorder="big")
         
         header = pack_id_b + pack_len_b
-        await self.send(header)
-
+        res = await self.send(header)
+        if not res:
+            logging.debug("failed to send header")
+            return False
+        return True
+        
     async def send_packet(self, packet: Packet, send_header = True):
         if send_header:
-            await self.send_header(packet)
+            res = await self.send_header(packet)
+        
+        if not res:
+            logging.debug("failed to send header from packet")
+            return False
         
         # convert packet to bytes
         packet.pack_data()
         if packet.packet_length > 0:
-            await self.send(packet.packet_bytes)
+            res = await self.send(packet.packet_bytes)
+            if not res:
+                logging.debug("failed to send packet bytes")
+                return False
+        return True
+    
 
     async def recv_header(self) -> list[int, int]:
         header = await self.recv(5)
@@ -210,10 +231,11 @@ class ProtocolHandler:
     async def recv_packet(self, header: list[int, int] = None) -> Packet:
         recv_header = header
         if not recv_header:
-            recv_header = await self.recv_header()
+            recv_header = await self.recv_header() 
 
         packet_id, packet_length = recv_header
 
+        logging.debug("Received packet id: %s, length: %s", packet_id, packet_length)
         recv_packet_class = packetList[packet_id]
         recv_packet = recv_packet_class()
         packet_bytes: bytes = None

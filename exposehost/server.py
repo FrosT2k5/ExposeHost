@@ -5,13 +5,19 @@ import socket
 import ssl
 import sys
 from exposehost.impl import packets
-from exposehost.helpers import random_string
+from exposehost.helpers import random_string, \
+    add_new_nginx_config, \
+    remove_old_nginx_config, \
+    clean_all_nginx_configs
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.info("Starting")
 
+
 MAX_TIMEOUT = 5
+DOMAIN_NAME = 'exposehost.local'
+CURRENT_DOMAINS: set = set()
 
 
 class ExposeHostForwarder(packets.ProtocolHandler):
@@ -144,6 +150,7 @@ class ExposeHostForwarder(packets.ProtocolHandler):
 class ServerConnection(packets.ProtocolHandler):
     forwarders: list[ExposeHostForwarder] = [] # List of ExposeHostForwarder Objects
     subdomain: str = None
+    full_domain: str = None
     c_session_key: str = None
     protocol: str = None                       # for now http/tcp
     exposed_port: int = 0                      # port to be exposed
@@ -164,17 +171,26 @@ class ServerConnection(packets.ProtocolHandler):
         connection_packet.c_session_key = self.c_session_key
 
         # Send new connection packet over the control server
-        await self.send_packet(connection_packet)
+        res = await self.send_packet(connection_packet)
+        if not res:
+            # The connection is closed, close the server connection too
+            await self.kill_server("Connection closed by client")
 
 
     async def kill_server(self, reason: str):
         kill_connection_packet = packets.KillServerConnectionPacket()
         kill_connection_packet.reason = reason
 
+        logger.debug("Closing server connection with: %s Reason: %s", self.full_domain, reason)
         await self.send_packet(kill_connection_packet)
         
         # Remove Server Connection from Server Class Instance
         self.serverClassInstance.clients.remove(self)
+
+        # If protocol is http then just remove the nginx config
+        if self.protocol == "http":
+            remove_old_nginx_config(self.full_domain)
+            CURRENT_DOMAINS.remove(self.full_domain)
 
         # Close the Connection
         await self.close()
@@ -190,15 +206,34 @@ class ServerConnection(packets.ProtocolHandler):
         forwarder_instance = ExposeHostForwarder(self, self.protocol, 0) 
         tunnel_response_packet = packets.TunnelResponsePacket()
         
+        self.full_domain = self.subdomain + "." + DOMAIN_NAME
+
+        if self.full_domain in CURRENT_DOMAINS:
+            tunnel_response_packet.status = "error"
+            tunnel_response_packet.error = "Subdomain already in use"
+            await self.send_packet(tunnel_response_packet)
+            await self.close()
+            return
+        
+        CURRENT_DOMAINS.add(self.full_domain)
+        
         # Start the forwarder server
         exposed_server = await forwarder_instance.startExposedServer()
         self.forwarders.append(forwarder_instance)
 
         tunnel_response_packet.status = "success"
         tunnel_response_packet.port = exposed_server[1] 
+        tunnel_response_packet.url = self.full_domain
+
+        if self.protocol == "http":
+            # Add nginx config if protocol is http
+            # add_new_nginx_config restarts nginx internally
+            add_new_nginx_config(self.full_domain, exposed_server[1])
+            tunnel_response_packet.url = "https://" + self.full_domain
 
         # Send successful tunnel resp
         await self.send_packet(tunnel_response_packet)
+        logger.debug("Sent tunnel response packet for %s", self.full_domain)
 
 
 class Server(packets.ProtocolHandler):
@@ -275,8 +310,9 @@ class Server(packets.ProtocolHandler):
         await asyncio.start_server(self.handleAsyncConnection, sock=self.sock4, ssl=context)
 
     def start(self):
+        # Clean existing nginx configs on startup
+        clean_all_nginx_configs()
+
         loop = asyncio.new_event_loop()
         loop.run_until_complete(self.startAsync())
         loop.run_forever()
-
-

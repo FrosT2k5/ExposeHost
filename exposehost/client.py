@@ -20,13 +20,15 @@ class Client(packets.ProtocolHandler):
     serverHost = None
     serverPort = None
     protocol = None
+    subdomain: str = None
 
-    def __init__(self, host, port, serverHost, serverPort, protocol):
+    def __init__(self, host, port, serverHost, serverPort, protocol, subdomain):
         self.host = host
         self.port = port
         self.serverHost = serverHost
         self.serverPort = serverPort
         self.protocol = protocol
+        self.subdomain = subdomain
 
     async def forward(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         try:
@@ -36,7 +38,8 @@ class Client(packets.ProtocolHandler):
                     break
                 writer.write(data)
                 await writer.drain()
-
+        except Exception as e:
+            logger.error("Error occured at forwarder: %s", e)
         finally:
             writer.close()
             await writer.wait_closed()
@@ -76,7 +79,7 @@ class Client(packets.ProtocolHandler):
         req_packet.jwt_token = helpers.random_string(32)
         req_packet.c_session_key = helpers.random_string(32)
         req_packet.port = self.serverPort
-        req_packet.subdomain = 'test_hardcoded_val'
+        req_packet.subdomain = self.subdomain
         req_packet.protocol = self.protocol
         
         await self.send_packet(req_packet)
@@ -90,6 +93,7 @@ class Client(packets.ProtocolHandler):
             if received_packet.status == "success":
                 logger.debug("Tunneling server listening opened port: %s", received_packet.port)
                 logger.debug("Test URL: http://localhost:%s", received_packet.port)
+                logger.debug("Received URL: %s", received_packet.url)
             else:
                 logger.debug("Tunnel server failed to open port, reason: %s", received_packet.error)
                 return 
@@ -101,6 +105,8 @@ class Client(packets.ProtocolHandler):
                 if isinstance(new_connection_packet, packets.NewClientConnectionPacket):
                     # A new connection is received, create new server connection
                     # and forward forever
+                    logger.info("Received new packet")
+                    logger.debug("Connection ID: %s", new_connection_packet.connection_id)
                     await self.forward_tcp(new_connection_packet.connection_id)
 
     def start(self):
