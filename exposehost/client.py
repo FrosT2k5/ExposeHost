@@ -109,6 +109,11 @@ class Client(packets.ProtocolHandler):
                     logger.debug("Connection ID: %s", new_connection_packet.connection_id)
                     await self.forward_tcp(new_connection_packet.connection_id)
 
+                if isinstance(new_connection_packet, packets.HeartBeatPacket):
+                    # logger.debug("Received heartbeat packet from server")
+                    # do nothing as packet isn't meant to do anything
+                    pass
+                
     def start(self):
         loop = asyncio.new_event_loop()
         loop.run_until_complete(self.server_connect())

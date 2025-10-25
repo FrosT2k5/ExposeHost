@@ -81,6 +81,22 @@ class NewConnectionHostResponsePacket(Packet):
         self.connection_id = packet_json['connection_id']
 
 
+class HeartBeatPacket(Packet):
+    packet_id = 200
+
+    def pack_data(self) -> int:
+        # Pack the packet and return the packet length
+        self.packet_json = {
+        }
+
+        self.serialize_json_bytes()
+        return self.packet_length
+    
+    def unpack_data(self, buffer: bytes):
+        self.packet_bytes = buffer
+        packet_json = {}
+
+
 class TunnelResponsePacket(Packet):
     packet_id = 100
     port: int = None
@@ -212,7 +228,7 @@ class ProtocolHandler:
         
         # convert packet to bytes
         packet.pack_data()
-        if packet.packet_length > 0:
+        if packet.packet_length > 2: # json has 2 bytes of {}
             res = await self.send(packet.packet_bytes)
             if not res:
                 logging.debug("failed to send packet bytes")
@@ -235,12 +251,11 @@ class ProtocolHandler:
 
         packet_id, packet_length = recv_header
 
-        logging.debug("Received packet id: %s, length: %s", packet_id, packet_length)
         recv_packet_class = packetList[packet_id]
         recv_packet = recv_packet_class()
         packet_bytes: bytes = None
 
-        if packet_length > 0:
+        if packet_length > 2:
             packet_bytes = await self.recv(packet_length)
         
         recv_packet.unpack_data(packet_bytes)
@@ -253,5 +268,6 @@ packetList = {
     2: NewConnectionHostResponsePacket,
     100: TunnelResponsePacket,
     101: NewClientConnectionPacket,
-    255: KillServerConnectionPacket
+    200: HeartBeatPacket,
+    255: KillServerConnectionPacket,
 }

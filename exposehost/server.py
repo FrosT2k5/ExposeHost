@@ -97,6 +97,7 @@ class ExposeHostForwarder(packets.ProtocolHandler):
                     # If is_forwarding is not set, means host did not respond,
                     # close the forwarder server
                     await self.expostHostClassInstance.stop_server()
+                    logger.debug("Closing server: %s", self.expostHostClassInstance.subdomain)
                 await writer.wait_closed()
 
     protocol: str = None        # Can be TCP/HTTP (UDP in future)
@@ -105,6 +106,7 @@ class ExposeHostForwarder(packets.ProtocolHandler):
     sock4 = None
     serverSocket: asyncio.Server = None
     tcp_servers: list[TCPProtocolHandler] = []
+    sock_name: list = None
 
     def __init__(self, serverConnectionClassInstance, protocol, exposed_port):
         self.serverConnectionClassInstance = serverConnectionClassInstance
@@ -128,6 +130,7 @@ class ExposeHostForwarder(packets.ProtocolHandler):
         self.serverSocket = await asyncio.start_server(self.handleTCPClientConnection, sock=self.sock4)
         sock_name = self.serverSocket.sockets[0].getsockname()
         logger.debug("Started to listen client exposed request on port: %s", sock_name[1])
+        self.sock_name = sock_name
         return sock_name
 
     async def stop_server(self):
@@ -138,17 +141,16 @@ class ExposeHostForwarder(packets.ProtocolHandler):
 
         # Close the forwarder server
         if self.serverSocket:
+            logger.debug("Stopped server at port: %s", self.sock_name[1])
             self.serverSocket.close()
         
         # Remove the forwarder instance from the server connection class instance
         self.serverConnectionClassInstance.forwarders.remove(self)
 
-        # Close the control server        
-        await self.serverConnectionClassInstance.kill_server("Host Did Not Respond within Timeout.")
-
         
 class ServerConnection(packets.ProtocolHandler):
-    forwarders: list[ExposeHostForwarder] = [] # List of ExposeHostForwarder Objects
+    forwarders: list[ExposeHostForwarder]  = [] # List of ExposeHostForwarder Objects
+    forwarders_port_mapping: dict[int, ExposeHostForwarder] = {}
     subdomain: str = None
     full_domain: str = None
     c_session_key: str = None
@@ -176,6 +178,31 @@ class ServerConnection(packets.ProtocolHandler):
             # The connection is closed, close the server connection too
             await self.kill_server("Connection closed by client")
 
+    
+    async def heartbeat_check(self, exposed_server_port):
+        while True:
+            heartbeatPacket = packets.HeartBeatPacket()
+            response = await self.send_packet(heartbeatPacket)
+            
+            if response == False:
+                logger.debug("Sent heartbeat packet to: %s, response: %s", self.subdomain, response)
+
+                # False response means connection was closed, stop forwarder that uses
+                # exposed_server_port
+                print(self.forwarders, self.forwarders_port_mapping)
+                forwarder = self.forwarders_port_mapping.get(exposed_server_port)
+                if forwarder:
+                    logger.debug("Stopping forwarder at port: %s", exposed_server_port)
+                    await forwarder.stop_server()
+                    print("Remaining forwarders: ", self.forwarders)
+                    self.forwarders_port_mapping.pop(exposed_server_port)
+
+                # Also stop the server connection
+                await self.kill_server("Connection closed during heartbeat check")
+
+                return 
+            await asyncio.sleep(2)   # wait for 5 seconds
+    
 
     async def kill_server(self, reason: str):
         kill_connection_packet = packets.KillServerConnectionPacket()
@@ -216,24 +243,31 @@ class ServerConnection(packets.ProtocolHandler):
             return
         
         CURRENT_DOMAINS.add(self.full_domain)
-        
+
         # Start the forwarder server
         exposed_server = await forwarder_instance.startExposedServer()
+        exposed_port = exposed_server[1]
+
+        # Append the forwarder with exposed_port as key
         self.forwarders.append(forwarder_instance)
+        self.forwarders_port_mapping[exposed_port] = forwarder_instance
 
         tunnel_response_packet.status = "success"
-        tunnel_response_packet.port = exposed_server[1] 
+        tunnel_response_packet.port = exposed_port
         tunnel_response_packet.url = self.full_domain
 
         if self.protocol == "http":
             # Add nginx config if protocol is http
             # add_new_nginx_config restarts nginx internally
-            add_new_nginx_config(self.full_domain, exposed_server[1])
+            add_new_nginx_config(self.full_domain, exposed_port)
             tunnel_response_packet.url = "https://" + self.full_domain
 
         # Send successful tunnel resp
         await self.send_packet(tunnel_response_packet)
         logger.debug("Sent tunnel response packet for %s", self.full_domain)
+        
+        # Start the heartbeat check task, schedule background task
+        heartbeat_packet_task = asyncio.create_task(self.heartbeat_check(exposed_port))
 
 
 class Server(packets.ProtocolHandler):
@@ -248,7 +282,7 @@ class Server(packets.ProtocolHandler):
         self.host = host
         self.port = port
         logger.info("Starting listener on %s:%s", host, port)
-    
+
     async def handleAsyncConnection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         super().__init__(reader, writer)
 
