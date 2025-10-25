@@ -201,7 +201,7 @@ class ServerConnection(packets.ProtocolHandler):
                 await self.kill_server("Connection closed during heartbeat check")
 
                 return 
-            await asyncio.sleep(2)   # wait for 5 seconds
+            await asyncio.sleep(5)   # wait for 5 seconds
     
 
     async def kill_server(self, reason: str):
