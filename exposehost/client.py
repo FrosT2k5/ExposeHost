@@ -9,9 +9,12 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Global ssl context
-ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-ssl_ctx.check_hostname = False
-ssl_ctx.verify_mode = ssl.CERT_NONE
+# ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+# ssl_ctx.check_hostname = False
+# ssl_ctx.verify_mode = ssl.CERT_NONE
+ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+ssl_ctx.check_hostname = True
+ssl_ctx.verify_mode = ssl.CERT_REQUIRED
 
 
 class Client(packets.ProtocolHandler):
