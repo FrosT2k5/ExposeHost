@@ -81,12 +81,11 @@ class TCPProtocolHandler:
                 # If is_forwarding is not set, means host did not respond,
                 # close the forwarder server
                 await self.expostHostClassInstance.stop_server()
-                logger.debug("Closing server: %s", self.expostHostClassInstance.subdomain)
+                logger.debug("Closing server: %s", self.expostHostClassInstance.exposed_port)
             await writer.wait_closed()
 
 
 class ExposeHostForwarder(packets.ProtocolHandler):
-
     protocol: str = None        # Can be TCP/HTTP (UDP in future)
     exposed_port: int = None
     serverConnectionClassInstance = None
