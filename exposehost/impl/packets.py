@@ -97,6 +97,26 @@ class HeartBeatPacket(Packet):
         packet_json = {}
 
 
+class LoadbalanceResponsePacket(Packet):
+    packet_id = 201
+    new_port: int = None
+
+    def pack_data(self) -> int:
+        # Pack the packet and return the packet length
+        self.packet_json = {
+            "new_port": self.new_port
+        }
+
+        self.serialize_json_bytes()
+        return self.packet_length
+    
+    def unpack_data(self, buffer: bytes):
+        self.packet_bytes = buffer
+        packet_json = self.deserialize_json_bytes()
+
+        self.new_port = packet_json["new_port"]
+
+
 class TunnelResponsePacket(Packet):
     packet_id = 100
     port: int = None
@@ -269,5 +289,6 @@ packetList = {
     100: TunnelResponsePacket,
     101: NewClientConnectionPacket,
     200: HeartBeatPacket,
+    201: LoadbalanceResponsePacket,
     255: KillServerConnectionPacket,
 }
