@@ -4,6 +4,7 @@ import ssl
 import sys
 from exposehost.impl import packets
 from exposehost import helpers
+import threading
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -16,6 +17,17 @@ ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
 ssl_ctx.check_hostname = True
 ssl_ctx.verify_mode = ssl.CERT_REQUIRED
 
+"""
+Function to:
+get status
+get url
+get port
+"""
+
+def loop_thread(loop: asyncio.AbstractEventLoop):
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
+
 
 class Client(packets.ProtocolHandler):
     host = None
@@ -24,6 +36,8 @@ class Client(packets.ProtocolHandler):
     serverPort = None
     protocol = None
     subdomain: str = None
+    status: str = 'stopped'            # stopped, connecting, connected, failed
+    url: str = None
 
     def __init__(self, host, port, serverHost, serverPort, protocol, subdomain):
         self.host = host
@@ -32,6 +46,15 @@ class Client(packets.ProtocolHandler):
         self.serverPort = serverPort
         self.protocol = protocol
         self.subdomain = subdomain
+
+    def get_status(self):
+        return self.status
+
+    def get_url(self):
+        return self.url
+
+    def get_port(self):
+        return self.serverPort
 
     async def forward(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         try:
@@ -73,7 +96,9 @@ class Client(packets.ProtocolHandler):
 
     async def server_connect(self):
         logger.info("Connecting to server %s:%s", self.serverHost, self.serverPort)
+        self.status = 'connecting'
         reader, writer = await asyncio.open_connection(self.serverHost, self.serverPort, ssl=ssl_ctx)
+
         super().__init__(reader, writer)
 
         # Send Connection Request Packet
@@ -91,9 +116,24 @@ class Client(packets.ProtocolHandler):
         # await self.close()
         # Receive the tunnel response packet
         received_packet = await self.recv_packet()
-        
+
+        if isinstance(received_packet, packets.LoadbalanceResponsePacket):
+            new_port = received_packet.new_port
+            self.serverPort = new_port
+            reader, writer = await asyncio.open_connection(self.serverHost, new_port, ssl=ssl_ctx)
+
+            super().__init__(reader, writer)
+
+
+            await self.send_packet(req_packet)
+            logger.debug("Packet info sent on loadbalanced port: %s", new_port)
+            received_packet = await self.recv_packet()
+
+
         if isinstance(received_packet, packets.TunnelResponsePacket):
             if received_packet.status == "success":
+                self.status = 'connected'
+                self.url = received_packet.url
                 logger.debug("Tunneling server listening opened port: %s", received_packet.port)
                 logger.debug("Test URL: http://localhost:%s", received_packet.port)
                 logger.debug("Received URL: %s", received_packet.url)
@@ -116,8 +156,15 @@ class Client(packets.ProtocolHandler):
                     # logger.debug("Received heartbeat packet from server")
                     # do nothing as packet isn't meant to do anything
                     pass
-                
+        
     def start(self):
         loop = asyncio.new_event_loop()
         loop.run_until_complete(self.server_connect())
-        
+
+    def start_non_blocking(self):    
+        loop = asyncio.new_event_loop()
+
+        t = threading.Thread(target=loop_thread, args=(loop,), daemon=True)
+        t.start()
+
+        return asyncio.run_coroutine_threadsafe(self.server_connect(), loop)
