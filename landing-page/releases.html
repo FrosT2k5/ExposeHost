@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Releases — ExposeHost</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="./" class="logo">
+                <svg class="logo-icon" width="32" height="32" viewBox="0 0 40 40" fill="none">
+                    <path d="M4 20C4 12 10 6 20 6C30 6 36 12 36 20" stroke="url(#navGrad)" stroke-width="3"
+                        stroke-linecap="round" fill="none" />
+                    <path d="M8 20C8 14 12 10 20 10C28 10 32 14 32 20" stroke="url(#navGrad)" stroke-width="2"
+                        stroke-linecap="round" fill="none" opacity="0.6" />
+                    <path d="M20 34L20 18" stroke="url(#navGrad)" stroke-width="3" stroke-linecap="round" />
+                    <path d="M14 24L20 18L26 24" stroke="url(#navGrad)" stroke-width="3" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <circle cx="20" cy="34" r="3" fill="url(#navGrad)" />
+                    <defs>
+                        <linearGradient id="navGrad" x1="20" y1="34" x2="20" y2="6">
+                            <stop offset="0%" stop-color="#6366f1" />
+                            <stop offset="100%" stop-color="#22d3ee" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span>Expose<span class="accent">Host</span></span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="./#how-it-works">How it works</a>
+                <a href="./#features">Features</a>
+                <a href="docs/">Docs</a>
+                <a href="releases.html">Releases</a>
+                <a href="https://github.com/frost2k5/ExposeHost" target="_blank" class="nav-btn">GitHub</a>
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="doc-page">
+        <h1>Releases</h1>
+        <p class="lead">Download the latest ExposeHost client.</p>
+
+        <div id="releases-container">
+            <!-- Dynamic content will be loaded here -->
+            <div class="loading-state">
+                <div class="spinner"></div>
+                Loading latest releases...
+            </div>
+        </div>
+
+        <h2>Stay Updated</h2>
+        <p>
+            Watch the <a href="https://github.com/frost2k5/ExposeHost" target="_blank">GitHub repository</a>
+            to get notified of new releases.
+        </p>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a href="./" class="logo"><span>ExposeHost</span></a>
+                <p>Open-source localhost tunneling</p>
+            </div>
+            <div class="footer-links">
+                <a href="docs/">Documentation</a>
+                <a href="releases.html">Releases</a>
+                <a href="https://github.com/frost2k5/ExposeHost" target="_blank">GitHub</a>
+            </div>
+        </div>
+    </footer>
+    <!-- Add marked for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,19 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Tunnel shape - representing the secure passage -->
+  <path d="M4 20C4 12 10 6 20 6C30 6 36 12 36 20" stroke="url(#tunnelGrad)" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M8 20C8 14 12 10 20 10C28 10 32 14 32 20" stroke="url(#tunnelGrad)" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+  
+  <!-- Arrow going through tunnel - data flowing out -->
+  <path d="M20 34L20 18" stroke="url(#tunnelGrad)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M14 24L20 18L26 24" stroke="url(#tunnelGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Small dot at localhost end -->
+  <circle cx="20" cy="34" r="3" fill="url(#tunnelGrad)"/>
+  
+  <defs>
+    <linearGradient id="tunnelGrad" x1="20" y1="34" x2="20" y2="6">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+</svg>
