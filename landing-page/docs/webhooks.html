@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Development — ExposeHost Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="icon" href="../logo.svg" type="image/svg+xml">
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../" class="logo">
+                <svg class="logo-icon" width="32" height="32" viewBox="0 0 40 40" fill="none">
+                    <path d="M4 20C4 12 10 6 20 6C30 6 36 12 36 20" stroke="url(#navGrad)" stroke-width="3" stroke-linecap="round" fill="none"/>
+                    <path d="M20 34L20 18" stroke="url(#navGrad)" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M14 24L20 18L26 24" stroke="url(#navGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="20" cy="34" r="3" fill="url(#navGrad)"/>
+                    <defs><linearGradient id="navGrad" x1="20" y1="34" x2="20" y2="6"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#22d3ee"/></linearGradient></defs>
+                </svg>
+                <span>Xpose<span class="accent">Host</span></span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="../#how-it-works">How it works</a>
+                <a href="./">Docs</a>
+                <a href="../releases.html">Releases</a>
+                <a href="https://github.com/frost2k5/ExposeHost" target="_blank" class="nav-btn">GitHub</a>
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+        </div>
+    </nav>
+
+    <main class="doc-page">
+        <a href="./" class="back-link">← Back to Docs</a>
+        <h1>Webhook Development</h1>
+        <p class="lead">Test payment gateways, OAuth callbacks, and third-party integrations on your local machine.</p>
+
+        <h2>The Problem</h2>
+        <p>Services like Stripe, GitHub, Twilio, and Slack send webhook events to a public URL. During development, your local server isn't accessible from the internet, making webhook testing difficult.</p>
+
+        <h2>Solution with ExposeHost</h2>
+        <p>ExposeHost creates a public URL that forwards requests to your local development server. Third-party services can send webhooks to this URL, and you receive them locally.</p>
+
+        <h2>Step-by-Step Guide</h2>
+
+        <h3>1. Start your local webhook handler</h3>
+        <p>Run your application that handles webhooks. For example, a Flask server:</p>
+        <pre><code># app.py
+from flask import Flask, request
+
+app = Flask(__name__)
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    data = request.json
+    print(f"Received webhook: {data}")
+    return {'status': 'ok'}
+
+if __name__ == '__main__':
+    app.run(port=5000)</code></pre>
+        <pre><code>python app.py</code></pre>
+
+        <h3>2. Start ExposeHost client</h3>
+        <pre><code>python client_cli.py
+Port to forward: 5000
+Subdomain: mywebhooks</code></pre>
+        <p>You'll receive a public URL like <code>https://mywebhooks.ExposeHost.me</code></p>
+
+        <h3>3. Configure your webhook provider</h3>
+        <p>Use the ExposeHost URL in your webhook settings:</p>
+        <ul>
+            <li><strong>Stripe:</strong> Dashboard → Developers → Webhooks → Add endpoint</li>
+            <li><strong>GitHub:</strong> Repo Settings → Webhooks → Add webhook</li>
+            <li><strong>Twilio:</strong> Phone Number settings → Webhook URL</li>
+        </ul>
+        <p>Set the webhook URL to: <code>https://mywebhooks.ExposeHost.me/webhook</code></p>
+
+        <h3>4. Test the integration</h3>
+        <p>Trigger an event (e.g., make a test payment in Stripe) and watch the webhook arrive at your local server.</p>
+
+        <h2>Tips</h2>
+        <ul>
+            <li>Use a consistent subdomain so you don't have to update webhook URLs frequently</li>
+            <li>Add request logging to debug webhook payloads</li>
+            <li>Most services have a "test webhook" button to verify connectivity</li>
+        </ul>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-brand"><a href="../" class="logo"><span>ExposeHost</span></a></div>
+            <div class="footer-links">
+                <a href="./">Documentation</a>
+                <a href="https://github.com/frost2k5/ExposeHost" target="_blank">GitHub</a>
+            </div>
+        </div>
+    </footer>
+    <script src="../script.js"></script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCP Services — ExposeHost Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="icon" href="../logo.svg" type="image/svg+xml">
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../" class="logo">
+                <svg class="logo-icon" width="32" height="32" viewBox="0 0 40 40" fill="none">
+                    <path d="M4 20C4 12 10 6 20 6C30 6 36 12 36 20" stroke="url(#navGrad)" stroke-width="3"
+                        stroke-linecap="round" fill="none" />
+                    <path d="M20 34L20 18" stroke="url(#navGrad)" stroke-width="3" stroke-linecap="round" />
+                    <path d="M14 24L20 18L26 24" stroke="url(#navGrad)" stroke-width="3" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <circle cx="20" cy="34" r="3" fill="url(#navGrad)" />
+                    <defs>
+                        <linearGradient id="navGrad" x1="20" y1="34" x2="20" y2="6">
+                            <stop offset="0%" stop-color="#6366f1" />
+                            <stop offset="100%" stop-color="#22d3ee" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span>Expose<span class="accent">Host</span></span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="../#how-it-works">How it works</a>
+                <a href="../#features">Features</a>
+                <a href="./">Docs</a>
+                <a href="../releases.html">Releases</a>
+                <a href="https://github.com/frost2k5/ExposeHost" target="_blank" class="nav-btn">GitHub</a>
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+        </div>
+    </nav>
+
+    <main class="doc-page">
+        <a href="./" class="back-link">← Back to Docs</a>
+        <h1>TCP Services</h1>
+        <p class="lead">Expose non-HTTP services like SSH, databases, FTP, and game servers using raw TCP tunneling.</p>
+
+        <h2>SSH Access</h2>
+        <p>Expose SSH for remote terminal access to your machine:</p>
+        <pre><code>python client_cli.py tcp
+Port to forward: 22
+Subdomain: my-ssh</code></pre>
+        <p>Connect from anywhere:</p>
+        <pre><code>ssh user@my-ssh.ExposeHost.me -p [exposed_port]</code></pre>
+
+        <h2>FTP Server Access</h2>
+        <p>Expose a local FTP server safely using TCP forwarding:</p>
+        <pre><code>python client_cli.py tcp
+Port to forward: 21
+Subdomain: my-ftp</code></pre>
+        <p>Connect using any FTP client:</p>
+        <pre><code>Host: my-ftp.ExposeHost.me
+Port: [exposed_port]</code></pre>
+        <p><em>Note: Passive mode FTP may require additional configuration due to dynamic ports.</em></p>
+
+        <h2>MySQL/MariaDB Access</h2>
+        <p>Access your local database for remote management or app connectivity:</p>
+        <pre><code>python client_cli.py tcp
+Port to forward: 3306
+Subdomain: my-db</code></pre>
+        <p>Connect remotely:</p>
+        <pre><code>mysql -h my-db.ExposeHost.me -P [exposed_port] -u root -p</code></pre>
+
+        <h2>Game Servers</h2>
+        <p>Host a Minecraft server or other TCP-based game servers:</p>
+        <pre><code>python client_cli.py tcp
+Port to forward: 25565
+Subdomain: my-mc-server</code></pre>
+        <p>Players connect via:</p>
+        <pre><code>my-mc-server.ExposeHost.me:[exposed_port]</code></pre>
+
+        <h2>Security Considerations</h2>
+        <ul>
+            <li>TCP tunneling exposes the raw port directly to the internet.</li>
+            <li>Ensure your services have strong passwords and up-to-date security patches.</li>
+            <li>Use firewalls (like ufw) on your local machine if necessary to limit access to other local ports.</li>
+        </ul>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-brand"><a href="../" class="logo"><span>ExposeHost</span></a></div>
+            <div class="footer-links">
+                <a href="./">Documentation</a>
+                <a href="https://github.com/frost2k5/ExposeHost" target="_blank">GitHub</a>
+            </div>
+        </div>
+    </footer>
+    <script src="../script.js"></script>
+</body>
+
+</html>

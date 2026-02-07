@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExposeHost — Expose LocalHost to Internet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="/" class="logo">
+                <svg class="logo-icon" width="32" height="32" viewBox="0 0 40 40" fill="none">
+                    <path d="M4 20C4 12 10 6 20 6C30 6 36 12 36 20" stroke="url(#navGrad)" stroke-width="3"
+                        stroke-linecap="round" fill="none" />
+                    <path d="M8 20C8 14 12 10 20 10C28 10 32 14 32 20" stroke="url(#navGrad)" stroke-width="2"
+                        stroke-linecap="round" fill="none" opacity="0.6" />
+                    <path d="M20 34L20 18" stroke="url(#navGrad)" stroke-width="3" stroke-linecap="round" />
+                    <path d="M14 24L20 18L26 24" stroke="url(#navGrad)" stroke-width="3" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <circle cx="20" cy="34" r="3" fill="url(#navGrad)" />
+                    <defs>
+                        <linearGradient id="navGrad" x1="20" y1="34" x2="20" y2="6">
+                            <stop offset="0%" stop-color="#6366f1" />
+                            <stop offset="100%" stop-color="#22d3ee" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span>Expose<span class="accent">Host</span></span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="#how-it-works">How it works</a>
+                <a href="#features">Features</a>
+                <a href="docs/">Docs</a>
+                <a href="releases.html">Releases</a>
+                <a href="https://github.com/frost2k5/ExposeHost" target="_blank" class="nav-btn">GitHub</a>
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1>Expose your localhost to the internet</h1>
+            <p>Bypass NAT and firewalls. Share local TCP services with a public URL. TLS encrypted, custom subdomains,
+                open source.</p>
+            <div class="hero-btns">
+                <a href="releases.html" class="btn primary">Download</a>
+                <a href="#how-it-works" class="btn secondary">See how it works</a>
+            </div>
+        </div>
+        <div class="hero-demo">
+            <div class="terminal">
+                <div class="terminal-bar"><span></span><span></span><span></span></div>
+                <pre><code>$ python client_cli.py
+Port to forward: <span class="hl-yellow">3000</span>
+Subdomain: <span class="hl-yellow">myapp</span>
+
+<span class="hl-green">Connected!</span>
+<span class="hl-dim">Your local service is now available at:</span>
+<span class="hl-blue">https://myapp.ExposeHost.me</span></code></pre>
+            </div>
+        </div>
+    </header>
+
+    <section id="how-it-works" class="how-it-works">
+        <h2>How it works</h2>
+        <p class="section-desc">ExposeHost creates a secure tunnel from your local machine to our server, making your
+            localhost accessible via a public URL.</p>
+
+        <div class="flow-diagram">
+            <div class="flow-col">
+                <div class="flow-label">Your Machine</div>
+                <div class="flow-box localhost">
+                    <div class="flow-box-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <path d="M8 21h8M12 17v4" />
+                        </svg>
+                    </div>
+                    <div class="flow-box-title">Local Service</div>
+                    <div class="flow-box-desc">localhost:3000</div>
+                </div>
+                <div class="flow-arrow down"></div>
+                <div class="flow-box client">
+                    <div class="flow-box-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
+                    </div>
+                    <div class="flow-box-title">ExposeHost Client</div>
+                    <div class="flow-box-desc">Establishes tunnel</div>
+                </div>
+            </div>
+
+            <div class="flow-col tunnel-col">
+                <div class="flow-label">Secure Tunnel</div>
+                <div class="tunnel">
+                    <div class="tunnel-inner">
+                        <span class="tunnel-text">TLS Encrypted</span>
+                        <div class="tunnel-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="tunnel-note">Bypasses NAT & Firewall</div>
+            </div>
+
+            <div class="flow-col">
+                <div class="flow-label">ExposeHost Server</div>
+                <div class="flow-box server">
+                    <div class="flow-box-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="8" rx="2" />
+                            <rect x="2" y="14" width="20" height="8" rx="2" />
+                            <circle cx="6" cy="6" r="1" />
+                            <circle cx="6" cy="18" r="1" />
+                        </svg>
+                    </div>
+                    <div class="flow-box-title">Tunneling Server</div>
+                    <div class="flow-box-desc">Load balancer + nginx</div>
+                </div>
+                <div class="flow-arrow down"></div>
+                <div class="flow-box public">
+                    <div class="flow-box-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path
+                                d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        </svg>
+                    </div>
+                    <div class="flow-box-title">Public URL</div>
+                    <div class="flow-box-desc">myapp.ExposeHost.me</div>
+                </div>
+            </div>
+
+            <div class="flow-col">
+                <div class="flow-label">End Users</div>
+                <div class="flow-box users">
+                    <div class="flow-box-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </div>
+                    <div class="flow-box-title">Anyone on Internet</div>
+                    <div class="flow-box-desc">Access your service</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-steps">
+            <div class="flow-step">
+                <span class="step-num">1</span>
+                <div>
+                    <strong>Start your local service</strong>
+                    <p>Run your app on any port (e.g., localhost:3000)</p>
+                </div>
+            </div>
+            <div class="flow-step">
+                <span class="step-num">2</span>
+                <div>
+                    <strong>Run ExposeHost client</strong>
+                    <p>Client authenticates and requests a subdomain</p>
+                </div>
+            </div>
+            <div class="flow-step">
+                <span class="step-num">3</span>
+                <div>
+                    <strong>Tunnel established</strong>
+                    <p>Server allocates port, configures nginx routing</p>
+                </div>
+            </div>
+            <div class="flow-step">
+                <span class="step-num">4</span>
+                <div>
+                    <strong>Share your URL</strong>
+                    <p>Anyone can access your local service globally</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <h2>Features</h2>
+        <div class="feature-grid">
+            <div class="feature">
+                <h3>TCP Protocol Support</h3>
+                <p>Forward HTTP, databases, SSH, game servers, or any TCP-based service.</p>
+            </div>
+            <div class="feature">
+                <h3>TLS Encryption</h3>
+                <p>All traffic between your machine and the server is encrypted end-to-end.</p>
+            </div>
+            <div class="feature">
+                <h3>Custom Subdomains</h3>
+                <p>Choose your own subdomain for memorable, shareable URLs.</p>
+            </div>
+            <div class="feature">
+                <h3>Multi-Process Server</h3>
+                <p>Load-balanced worker processes for handling many concurrent tunnels.</p>
+            </div>
+            <div class="feature">
+                <h3>Self-Hostable</h3>
+                <p>Deploy on your own VPS. No vendor lock-in, full control.</p>
+            </div>
+            <div class="feature">
+                <h3>Open Source</h3>
+                <p>MIT licensed. Inspect, modify, contribute. Built with Python asyncio.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="use-cases">
+        <h2>Use cases</h2>
+        <div class="cases">
+            <a href="docs/webhooks.html" class="case-card">
+                <h3>Webhook Development</h3>
+                <p>Test Stripe, GitHub, or Twilio webhooks on your local dev environment.</p>
+                <span class="case-link">Read guide</span>
+            </a>
+            <a href="docs/api-sharing.html" class="case-card">
+                <h3>API Sharing</h3>
+                <p>Share your local API with mobile devs or external testers instantly.</p>
+                <span class="case-link">Read guide</span>
+            </a>
+            <a href="docs/iot.html" class="case-card">
+                <h3>IoT & Remote Devices</h3>
+                <p>Access IoT dashboards or Raspberry Pi projects from anywhere.</p>
+                <span class="case-link">Read guide</span>
+            </a>
+            <a href="docs/tcp.html" class="case-card">
+                <h3>TCP Services</h3>
+                <p>Expose SSH, FTP, Databases, and Game Servers via TCP tunneling.</p>
+                <span class="case-link">Read guide</span>
+            </a>
+            <a href="docs/self-hosting.html" class="case-card">
+                <h3>Self-Hosted Alternative</h3>
+                <p>Replace ngrok with your own infrastructure. Zero recurring costs.</p>
+                <span class="case-link">Read guide</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="quickstart">
+        <h2>Quick start</h2>
+        <div class="qs-steps">
+            <div class="qs-step">
+                <h3>1. Clone the repository</h3>
+                <pre><code>git clone https://github.com/frost2k5/ExposeHost.git
+cd ExposeHost</code></pre>
+            </div>
+            <div class="qs-step">
+                <h3>2. Run the client</h3>
+                <pre><code># HTTP mode (default)
+python client_cli.py
+
+# TCP mode
+python client_cli.py tcp</code></pre>
+            </div>
+        </div>
+        <p class="qs-note">Desktop GUI app coming soon. <a href="releases.html">Check releases</a> for updates.</p>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a href="/" class="logo">
+                    <svg class="logo-icon" width="24" height="24" viewBox="0 0 40 40" fill="none">
+                        <path d="M4 20C4 12 10 6 20 6C30 6 36 12 36 20" stroke="url(#footGrad)" stroke-width="3"
+                            stroke-linecap="round" fill="none" />
+                        <path d="M20 34L20 18" stroke="url(#footGrad)" stroke-width="3" stroke-linecap="round" />
+                        <path d="M14 24L20 18L26 24" stroke="url(#footGrad)" stroke-width="3" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <circle cx="20" cy="34" r="3" fill="url(#footGrad)" />
+                        <defs>
+                            <linearGradient id="footGrad" x1="20" y1="34" x2="20" y2="6">
+                                <stop offset="0%" stop-color="#6366f1" />
+                                <stop offset="100%" stop-color="#22d3ee" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span>ExposeHost</span>
+                </a>
+                <p>Open-source localhost tunneling</p>
+            </div>
+            <div class="footer-links">
+                <a href="docs/">Documentation</a>
+                <a href="releases.html">Releases</a>
+                <a href="https://github.com/frost2k5/ExposeHost" target="_blank">GitHub</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>Built by Yash Patil & Sairaj Pai</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

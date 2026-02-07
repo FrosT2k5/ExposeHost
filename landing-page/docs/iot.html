@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT & Remote Devices — ExposeHost Docs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="icon" href="../logo.svg" type="image/svg+xml">
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="../" class="logo">
+                <svg class="logo-icon" width="32" height="32" viewBox="0 0 40 40" fill="none">
+                    <path d="M4 20C4 12 10 6 20 6C30 6 36 12 36 20" stroke="url(#navGrad)" stroke-width="3"
+                        stroke-linecap="round" fill="none" />
+                    <path d="M20 34L20 18" stroke="url(#navGrad)" stroke-width="3" stroke-linecap="round" />
+                    <path d="M14 24L20 18L26 24" stroke="url(#navGrad)" stroke-width="3" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <circle cx="20" cy="34" r="3" fill="url(#navGrad)" />
+                    <defs>
+                        <linearGradient id="navGrad" x1="20" y1="34" x2="20" y2="6">
+                            <stop offset="0%" stop-color="#6366f1" />
+                            <stop offset="100%" stop-color="#22d3ee" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span>Expose<span class="accent">Host</span></span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="../#how-it-works">How it works</a>
+                <a href="./">Docs</a>
+                <a href="../releases.html">Releases</a>
+                <a href="https://github.com/frost2k5/ExposeHost" target="_blank" class="nav-btn">GitHub</a>
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+        </div>
+    </nav>
+
+    <main class="doc-page">
+        <a href="./" class="back-link">← Back to Docs</a>
+        <h1>IoT & Remote Devices</h1>
+        <p class="lead">Access IoT dashboards, Raspberry Pi projects, or home servers from anywhere in the world.</p>
+
+        <h2>Use Cases</h2>
+        <ul>
+            <li>Access a Raspberry Pi web dashboard remotely</li>
+            <li>Monitor IoT sensors from outside your home network</li>
+            <li>Remote access to home automation systems</li>
+            <li>Access security camera feeds while traveling</li>
+            <li>Control home lab servers from anywhere</li>
+        </ul>
+
+        <h2>Raspberry Pi Example</h2>
+
+        <h3>1. Install ExposeHost on your Pi</h3>
+        <pre><code>git clone https://github.com/frost2k5/ExposeHost.git
+cd ExposeHost</code></pre>
+
+        <h3>2. Run your service</h3>
+        <p>Start any web server on your Pi. For example, a simple dashboard:</p>
+        <pre><code># Start a Python HTTP server
+python -m http.server 8080
+
+# Or start your Node-RED, Home Assistant, etc.</code></pre>
+
+        <h3>3. Start ExposeHost client</h3>
+        <pre><code>python client_cli.py tcp
+Port to forward: 8080
+Subdomain: my-pi</code></pre>
+
+        <h3>4. Access remotely</h3>
+        <p>Your Pi is now accessible at <code>https://my-pi.ExposeHost.me</code> from anywhere.</p>
+
+
+
+        <h2>Security Considerations</h2>
+        <ul>
+            <li>Use strong authentication on exposed services</li>
+            <li>Consider adding HTTP basic auth for web dashboards</li>
+            <li>Regularly update your Pi and ExposeHost</li>
+        </ul>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-brand"><a href="../" class="logo"><span>ExposeHost</span></a></div>
+            <div class="footer-links">
+                <a href="./">Documentation</a>
+                <a href="https://github.com/frost2k5/ExposeHost" target="_blank">GitHub</a>
+            </div>
+        </div>
+    </footer>
+    <script src="../script.js"></script>
+</body>
+
+</html>
