@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IoT & Remote Devices — ExposeHost Docs</title>
+    <title>TCP Services — ExposeHost Docs</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -36,6 +36,7 @@
             </a>
             <div class="nav-links" id="navLinks">
                 <a href="../#how-it-works">How it works</a>
+                <a href="../#features">Features</a>
                 <a href="./">Docs</a>
                 <a href="../releases.html">Releases</a>
                 <a href="https://github.com/frost2k5/ExposeHost" target="_blank" class="nav-btn">GitHub</a>
@@ -46,46 +47,48 @@
 
     <main class="doc-page">
         <a href="./" class="back-link">← Back to Docs</a>
-        <h1>IoT & Remote Devices</h1>
-        <p class="lead">Access IoT dashboards, Raspberry Pi projects, or home servers from anywhere in the world.</p>
+        <h1>TCP Services</h1>
+        <p class="lead">Expose non-HTTP services like SSH, databases, FTP, and game servers using raw TCP tunneling.</p>
 
-        <h2>Use Cases</h2>
-        <ul>
-            <li>Access a Raspberry Pi web dashboard remotely</li>
-            <li>Monitor IoT sensors from outside your home network</li>
-            <li>Remote access to home automation systems</li>
-            <li>Access security camera feeds while traveling</li>
-            <li>Control home lab servers from anywhere</li>
-        </ul>
-
-        <h2>Raspberry Pi Example</h2>
-
-        <h3>1. Install ExposeHost on your Pi</h3>
-        <pre><code>git clone https://github.com/frost2k5/ExposeHost.git
-cd ExposeHost</code></pre>
-
-        <h3>2. Run your service</h3>
-        <p>Start any web server on your Pi. For example, a simple dashboard:</p>
-        <pre><code># Start a Python HTTP server
-python -m http.server 8080
-
-# Or start your Node-RED, Home Assistant, etc.</code></pre>
-
-        <h3>3. Start ExposeHost client</h3>
+        <h2>SSH Access</h2>
+        <p>Expose SSH for remote terminal access to your machine:</p>
         <pre><code>python client_cli.py tcp
-Port to forward: 8080
-Subdomain: my-pi</code></pre>
+Port to forward: 22
+Subdomain: my-ssh</code></pre>
+        <p>Connect from anywhere:</p>
+        <pre><code>ssh user@my-ssh.ExposeHost.me -p [exposed_port]</code></pre>
 
-        <h3>4. Access remotely</h3>
-        <p>Your Pi is now accessible at <code>https://my-pi.ExposeHost.me</code> from anywhere.</p>
+        <h2>FTP Server Access</h2>
+        <p>Expose a local FTP server safely using TCP forwarding:</p>
+        <pre><code>python client_cli.py tcp
+Port to forward: 21
+Subdomain: my-ftp</code></pre>
+        <p>Connect using any FTP client:</p>
+        <pre><code>Host: my-ftp.ExposeHost.me
+Port: [exposed_port]</code></pre>
+        <p><em>Note: Passive mode FTP may require additional configuration due to dynamic ports.</em></p>
 
+        <h2>MySQL/MariaDB Access</h2>
+        <p>Access your local database for remote management or app connectivity:</p>
+        <pre><code>python client_cli.py tcp
+Port to forward: 3306
+Subdomain: my-db</code></pre>
+        <p>Connect remotely:</p>
+        <pre><code>mysql -h my-db.ExposeHost.me -P [exposed_port] -u root -p</code></pre>
 
+        <h2>Game Servers</h2>
+        <p>Host a Minecraft server or other TCP-based game servers:</p>
+        <pre><code>python client_cli.py tcp
+Port to forward: 25565
+Subdomain: my-mc-server</code></pre>
+        <p>Players connect via:</p>
+        <pre><code>my-mc-server.ExposeHost.me:[exposed_port]</code></pre>
 
         <h2>Security Considerations</h2>
         <ul>
-            <li>Use strong authentication on exposed services</li>
-            <li>Consider adding HTTP basic auth for web dashboards</li>
-            <li>Regularly update your Pi and ExposeHost</li>
+            <li>TCP tunneling exposes the raw port directly to the internet.</li>
+            <li>Ensure your services have strong passwords and up-to-date security patches.</li>
+            <li>Use firewalls (like ufw) on your local machine if necessary to limit access to other local ports.</li>
         </ul>
     </main>
 
