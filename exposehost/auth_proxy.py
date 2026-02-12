@@ -147,7 +147,7 @@ LOGIN_PAGE_HTML = """<!DOCTYPE html>
             </svg>
             <span>Expose<span class="accent">Host</span></span>
         </div>
-        <h1>Welcome Back</h1>
+        <h1>Accessing this page requires authorization</h1>
         <p class="subtitle">Please sign in to continue</p>
         <!-- ERROR_HTML -->
         <form method="POST" action="/auth-login">
