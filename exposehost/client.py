@@ -39,13 +39,26 @@ class Client(packets.ProtocolHandler):
     status: str = 'stopped'            # stopped, connecting, connected, failed
     url: str = None
 
-    def __init__(self, host, port, serverHost, serverPort, protocol, subdomain):
+    def __init__(self, host, port, serverHost, serverPort, protocol, subdomain,
+                 auth_enabled=False, auth_user=None, auth_pass=None):
         self.host = host
+        self.actual_port = port  # Store original service port
         self.port = port
         self.serverHost = serverHost
         self.serverPort = serverPort
         self.protocol = protocol
         self.subdomain = subdomain
+        self.auth_proxy = None
+        
+        # Store auth configuration for later initialization
+        if auth_enabled and protocol == 'http':
+            self.auth_proxy_config = {
+                'username': auth_user,
+                'password': auth_pass,
+                'actual_port': port
+            }
+        else:
+            self.auth_proxy_config = None
 
     def get_status(self):
         return self.status
@@ -95,6 +108,23 @@ class Client(packets.ProtocolHandler):
         )
 
     async def server_connect(self):
+        # If auth proxy is configured, start it first
+        if self.auth_proxy_config:
+            from exposehost.auth_proxy import AuthProxyServer
+            
+            self.auth_proxy = AuthProxyServer(
+                self.auth_proxy_config['username'],
+                self.auth_proxy_config['password'],
+                self.auth_proxy_config['actual_port']
+            )
+            
+            auth_proxy_port = await self.auth_proxy.start()
+            logger.info("Auth proxy started on port: %s", auth_proxy_port)
+            
+            # Replace forwarding port with auth proxy port
+            # This is the port that will be forwarded through the tunnel
+            self.port = auth_proxy_port
+        
         logger.info("Connecting to server %s:%s", self.serverHost, self.serverPort)
         self.status = 'connecting'
         reader, writer = await asyncio.open_connection(self.serverHost, self.serverPort, ssl=ssl_ctx)
