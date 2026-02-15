@@ -384,7 +384,7 @@ class ServiceScanner(QObject):
         'polkitd', 'wpa_supplicant', 'unattended-upgr', 'containerd',
         'dockerd', 'colord', 'gnome-shell', 'Xorg', 'Xwayland',
         'audispd', 'auditd', 'chronyd', 'crond', 'master', 'qmgr',
-        'sshd', 'systemd-resolve', 'systemd-logind', 'systemd-network',
+        'systemd-resolve', 'systemd-logind', 'systemd-network',
         'systemd-timesyn', 'thermald', 'whoopsie', 'wpa_supplicant',
         'zfs-arc', 'zfs-zevent', 'zfs-zpool'
     ]
@@ -400,10 +400,11 @@ class ServiceScanner(QObject):
                             port = conn.laddr.port
                             
                             # Filter out system ports except common web/dev ports
-                            is_system_port = port < 1024 and port not in [80, 443, 8080]
+                            # is_system_port = port < 1024 and port not in [80, 443, 8080]
+                            is_system_port = False
                             if not is_system_port:
                                 proc = psutil.Process(conn.pid)
-                                name = proc.name()
+                                name = " ".join(proc.cmdline())
                                 
                                 if name in self.IGNORED_PROCESSES:
                                     continue
