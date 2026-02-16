@@ -172,9 +172,10 @@ class AuthProxyServer:
     Handles login, session management, and streaming proxy to the actual service.
     """
     
-    def __init__(self, username: str, password: str, actual_service_port: int):
-        self.username = username
-        self.password = password
+    
+    def __init__(self, users: dict[str, str], actual_service_port: int):
+        # Users is a list of dicts: [{'username': 'u', 'password': 'p'}, ...]
+        self.users = users
         self.actual_port = actual_service_port
         self.secret_key = random_string(32)  # For signing session tokens
         self.app = None
@@ -205,11 +206,22 @@ class AuthProxyServer:
         if self.runner:
             await self.runner.cleanup()
             logger.info("Auth proxy server stopped")
+            
+    def add_user(self, username, password):
+        """Add or update a user"""
+        self.users[username] = password
+        logger.info("Added/Updated user: %s", username)
+        
+    def remove_user(self, username):
+        """Remove a user"""
+        if username in self.users:
+            del self.users[username]
+            logger.info("Removed user: %s", username)
     
-    def create_session_token(self) -> str:
+    def create_session_token(self, username) -> str:
         """Create a signed session token"""
         payload = {
-            'username': self.username,
+            'username': username,
             'expires': time.time() + 3600,  # 1 hour expiration
             'nonce': random_string(16)
         }
@@ -250,8 +262,14 @@ class AuthProxyServer:
                 logger.debug("Session token expired")
                 return False
             
+            # Check if user still exists
+            username = payload.get('username')
+            if username not in self.users:
+                logger.debug("User %s no longer exists", username)
+                return False
+
             # Log successful verification
-            logger.debug("Session verified for user: %s", payload.get('username'))
+            logger.debug("Session verified for user: %s", username)
             return True
         except Exception as e:
             logger.error("Error verifying session token: %s", e)
@@ -273,14 +291,18 @@ class AuthProxyServer:
             username = data.get('username', '')
             password = data.get('password', '')
             
-            if username == self.username and password == self.password:
+            if username in self.users and self.users[username] == password:
                 # Successful login - set session cookie and redirect
                 logger.info("Successful authentication for user: %s", username)
                 response = web.Response(status=302)
                 response.headers['Location'] = '/'
+                
+                # Create session token with username
+                token = self.create_session_token(username)
+                
                 response.set_cookie(
                     AUTH_COOKIE_NAME,
-                    self.create_session_token(),
+                    token,
                     httponly=True,
                     secure=True,
                     max_age=3600,

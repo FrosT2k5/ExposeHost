@@ -40,7 +40,7 @@ class Client(packets.ProtocolHandler):
     url: str = None
 
     def __init__(self, host, port, serverHost, serverPort, protocol, subdomain,
-                 auth_enabled=False, auth_user=None, auth_pass=None):
+                 auth_enabled=False, auth_users=None):
         self.host = host
         self.actual_port = port  # Store original service port
         self.port = port
@@ -53,12 +53,21 @@ class Client(packets.ProtocolHandler):
         # Store auth configuration for later initialization
         if auth_enabled and protocol == 'http':
             self.auth_proxy_config = {
-                'username': auth_user,
-                'password': auth_pass,
+                'users': auth_users or {},
                 'actual_port': port
             }
         else:
             self.auth_proxy_config = None
+
+    def add_auth_user(self, username, password):
+        """Add a user to the auth proxy if running"""
+        if self.auth_proxy:
+            self.auth_proxy.add_user(username, password)
+            
+    def remove_auth_user(self, username):
+        """Remove a user from the auth proxy if running"""
+        if self.auth_proxy:
+            self.auth_proxy.remove_user(username)
 
     def get_status(self):
         return self.status
@@ -113,8 +122,7 @@ class Client(packets.ProtocolHandler):
             from exposehost.auth_proxy import AuthProxyServer
             
             self.auth_proxy = AuthProxyServer(
-                self.auth_proxy_config['username'],
-                self.auth_proxy_config['password'],
+                self.auth_proxy_config['users'],
                 self.auth_proxy_config['actual_port']
             )
             
@@ -191,10 +199,11 @@ class Client(packets.ProtocolHandler):
         loop = asyncio.new_event_loop()
         loop.run_until_complete(self.server_connect())
 
+    
     def start_non_blocking(self):    
-        loop = asyncio.new_event_loop()
+        self.loop = asyncio.new_event_loop()
 
-        t = threading.Thread(target=loop_thread, args=(loop,), daemon=True)
+        t = threading.Thread(target=loop_thread, args=(self.loop,), daemon=True)
         t.start()
 
-        return asyncio.run_coroutine_threadsafe(self.server_connect(), loop)
+        return asyncio.run_coroutine_threadsafe(self.server_connect(), self.loop)
