@@ -13,10 +13,14 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
                              QMessageBox, QFrame, QSizePolicy, QSpacerItem, 
                              QGraphicsDropShadowEffect, QStyle, QToolTip, QCompleter,
                              QListWidget, QListWidgetItem, QDesktopWidget, QDialog,
-                             QScrollArea, QStackedWidget)
+                             QScrollArea, QStackedWidget, QCheckBox)
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal, QObject, QUrl, QSize
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QDesktopServices, QColor
-from PyQt5.QtSvg import QSvgWidget
+try:
+    from PyQt5.QtSvg import QSvgWidget
+    HAS_SVG = True
+except ImportError:
+    HAS_SVG = False
 
 from exposehost.client import Client
 
@@ -69,9 +73,9 @@ class Theme:
         background-color: #18181b;
         border: 1px solid #27272a;
         border-radius: 8px;
-        padding: 16px; /* More padding */
+        padding: 8px 16px; /* Reduced vertical padding to prevent clipping */
         color: #f4f4f5;
-        font-size: 16px; /* Bigger input text */
+        font-size: 16px;
         selection-background-color: #6366f1;
     }
     
@@ -154,7 +158,7 @@ class Theme:
         background-color: #fafafa;
         border: 1px solid #e4e4e7;
         border-radius: 8px;
-        padding: 16px;
+        padding: 8px 16px;
         color: #18181b;
         font-size: 16px;
         selection-background-color: #6366f1;
@@ -374,6 +378,146 @@ class SettingsWidget(QWidget):
         self.check_update_btn.setText("Check Failed (See Console)")
         self.check_update_btn.setEnabled(True)
 
+class AuthWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.users = [] # List of tuples (user_input, pass_input, row_layout, delete_btn)
+        self.initUI()
+        
+    def initUI(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(12)
+        
+        # Header with Toggle
+        header_layout = QHBoxLayout()
+        
+        self.toggle = QCheckBox("Enable Authorization")
+        self.toggle.setStyleSheet("font-weight: 700; font-size: 15px; color: #a1a1aa; spacing: 8px;")
+        self.toggle.setCursor(Qt.PointingHandCursor)
+        self.toggle.stateChanged.connect(self.on_toggle)
+        header_layout.addWidget(self.toggle)
+        header_layout.addStretch()
+        
+        layout.addLayout(header_layout)
+        
+        # Container for auth content (hidden by default)
+        self.auth_container = QWidget()
+        self.auth_layout = QVBoxLayout(self.auth_container)
+        self.auth_layout.setContentsMargins(0, 0, 0, 0)
+        self.auth_layout.setSpacing(10)
+        
+        # User List Container
+        self.user_list_widget = QWidget()
+        self.user_list_layout = QVBoxLayout(self.user_list_widget)
+        self.user_list_layout.setContentsMargins(0, 0, 0, 0)
+        self.user_list_layout.setSpacing(8)
+        self.auth_layout.addWidget(self.user_list_widget)
+        
+        # Add Button
+        self.add_btn = QPushButton("+ Add User")
+        self.add_btn.setObjectName("IconBtn")
+        self.add_btn.setCursor(Qt.PointingHandCursor)
+        self.add_btn.setStyleSheet("""
+            QPushButton#IconBtn {
+                text-align: center;
+                border: 1px dashed #52525b;
+                color: #a1a1aa;
+                padding: 8px;
+            }
+            QPushButton#IconBtn:hover {
+                border: 1px dashed #6366f1;
+                color: #6366f1;
+                background-color: rgba(99, 102, 241, 0.05);
+            }
+        """)
+        self.add_btn.clicked.connect(self.add_user_row)
+        self.auth_layout.addWidget(self.add_btn)
+        
+        layout.addWidget(self.auth_container)
+        
+        # Initial state
+        self.auth_container.setVisible(False)
+        self.add_user_row() # Add one default row
+        
+    def on_toggle(self, state):
+        self.auth_container.setVisible(state == Qt.Checked)
+        
+    def add_user_row(self):
+        row_widget = QWidget()
+        row_layout = QHBoxLayout(row_widget)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(8)
+        
+        user_input = QLineEdit()
+        user_input.setPlaceholderText("Username")
+        user_input.setFixedHeight(50) # Increased to prevent clipping
+        
+        pass_input = QLineEdit()
+        pass_input.setPlaceholderText("Password")
+        pass_input.setEchoMode(QLineEdit.Password)
+        pass_input.setFixedHeight(50) # Increased to prevent clipping
+        
+        delete_btn = QPushButton("×")
+        delete_btn.setFixedSize(50, 50)
+        delete_btn.setCursor(Qt.PointingHandCursor)
+        delete_btn.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: #ef4444;
+                border: 1px solid #ef4444; 
+                font-size: 20px;
+                padding: 0;
+            }
+            QPushButton:hover {
+                background-color: rgba(239, 68, 68, 0.1);
+            }
+        """)
+        
+        # Capture current row widget for deletion
+        delete_btn.clicked.connect(lambda: self.remove_user_row(row_widget))
+        
+        row_layout.addWidget(user_input, 1) # stretch factor 1
+        row_layout.addWidget(pass_input, 1) # stretch factor 1
+        row_layout.addWidget(delete_btn)
+        
+        self.user_list_layout.addWidget(row_widget)
+        
+        # Track this row
+        # We store references so we can retrieve values later
+        # We identify rows by the widget object itself
+        row_widget.user_input = user_input
+        row_widget.pass_input = pass_input
+        
+    def remove_user_row(self, row_widget):
+        # Don't remove the last row if it's the only one? 
+        # Actually, let's allow removing all, but maybe auto-add one if empty when enabling?
+        # For now simple remove
+        if self.user_list_layout.count() <= 1:
+             # Maybe clear instead of remove if it's the last one?
+             # Or just allow removing.
+             pass
+
+        self.user_list_layout.removeWidget(row_widget)
+        row_widget.deleteLater()
+        
+    def get_auth_config(self):
+        if not self.toggle.isChecked():
+            return {'enabled': False, 'users': {}}
+            
+        users = {}
+        # Iterate over layout items
+        for i in range(self.user_list_layout.count()):
+            item = self.user_list_layout.itemAt(i)
+            widget = item.widget()
+            if widget:
+                u = widget.user_input.text().strip()
+                p = widget.pass_input.text() # Password might have spaces? usually allowed.
+                if u and p:
+                    users[u] = p
+                    
+        return {'enabled': True, 'users': users}
+
 class ServiceScanner(QObject):
     scan_finished = pyqtSignal(list)
     
@@ -470,7 +614,7 @@ class ExposeHostGUI(QWidget):
         
         # Logo
         logo_path = os.path.join(os.path.dirname(__file__), 'landing-page', 'logo.svg')
-        if os.path.exists(logo_path):
+        if HAS_SVG and os.path.exists(logo_path):
             logo_widget = QSvgWidget(logo_path)
             logo_widget.setFixedSize(48, 48) # WAY BIGGER
             header_layout.addWidget(logo_widget)
@@ -490,8 +634,18 @@ class ExposeHostGUI(QWidget):
         
         home_layout.addWidget(self.header)
         
+        # Scroll Area for Home Content
+        self.home_scroll = QScrollArea()
+        self.home_scroll.setWidgetResizable(True)
+        self.home_scroll.setFrameShape(QFrame.NoFrame)
+        self.home_scroll.setStyleSheet("""
+            QScrollArea { background: transparent; border: none; }
+            QWidget { background: transparent; }
+        """)
+        
         # Content Container
         content_container = QWidget()
+        content_container.setObjectName("HomeContent")
         content_layout = QVBoxLayout(content_container)
         content_layout.setContentsMargins(24, 24, 24, 24) # Tighter margins
         content_layout.setSpacing(16) # Reduced spacing between elements
@@ -527,6 +681,8 @@ class ExposeHostGUI(QWidget):
         content_layout.addWidget(services_label)
 
         self.service_list = QListWidget()
+        self.service_list.setFixedHeight(180) # Made it biggervertically
+        self.service_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff) # Removed horizontal slider
         self.service_list.setStyleSheet("font-family: 'JetBrains Mono'; font-size: 15px;") 
         self.service_list.itemClicked.connect(self.on_service_selected)
         content_layout.addWidget(self.service_list)
@@ -539,6 +695,12 @@ class ExposeHostGUI(QWidget):
         self.subdomain_input.setPlaceholderText("your-app-name")
         content_layout.addWidget(sub_label)
         content_layout.addWidget(self.subdomain_input)
+        
+        content_layout.addSpacing(8)
+
+        # Authorization Widget
+        self.auth_widget = AuthWidget()
+        content_layout.addWidget(self.auth_widget)
         
         content_layout.addSpacing(16)
         
@@ -581,7 +743,8 @@ class ExposeHostGUI(QWidget):
         
         content_layout.addWidget(self.status_group)
         
-        home_layout.addWidget(content_container)
+        self.home_scroll.setWidget(content_container)
+        home_layout.addWidget(self.home_scroll)
         
         # --- Page 2: Settings ---
         self.settings_widget = SettingsWidget(self)
@@ -664,15 +827,28 @@ class ExposeHostGUI(QWidget):
             self.port_input.setFocus()
             return
             
-        if not subdomain:
             QMessageBox.warning(self, "Validation Error", "Subdomain is required.")
             self.subdomain_input.setFocus()
             return
 
+        # Auth Validation
+        auth_config = self.auth_widget.get_auth_config()
+        if auth_config['enabled']:
+            if not auth_config['users']:
+                QMessageBox.warning(self, "Validation Error", "Authorization is enabled but no valid username/password pairs provided.\nPlease add at least one user.")
+                return
+            # Duplicate check (optional but good)
+            # Logic in get_auth_config uses dict, so duplicates overwrite. 
+            # That's acceptable for now.
+
         self.set_ui_state(running=True)
         
         try:
-            self.client = Client(host, port, "exposehost.me", 1435, protocol, subdomain)
+            self.client = Client(
+                host, port, "exposehost.me", 1435, protocol, subdomain,
+                auth_enabled=auth_config['enabled'],
+                auth_users=auth_config['users']
+            )
             self.client.start_non_blocking()
             self.timer.start(500)
         except Exception as e:
@@ -694,6 +870,7 @@ class ExposeHostGUI(QWidget):
         self.port_input.setEnabled(enabled)
         self.service_list.setEnabled(enabled)
         self.subdomain_input.setEnabled(enabled)
+        self.auth_widget.setEnabled(enabled)
         self.refresh_btn.setEnabled(enabled)
         self.start_btn.setEnabled(enabled)
         
